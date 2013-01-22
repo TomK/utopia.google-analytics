@@ -1,22 +1,45 @@
 <?php
 
 uEvents::AddCallback('ProcessDomDocument','GoogleAnalytics::ProcessDomDocument','',99999);
-class GoogleAnalytics extends uBasicModule implements iAdminModule {
+utopia::AddTemplateParser('google_analytics_custom','GoogleAnalytics::IncludeCustom','');
+class GoogleAnalytics extends uBasicModule {
 	static function ProcessDomDocument($obj,$event,$doc) {
 		$account = modOpts::GetOption('google_analytics_account');
 		if (!$account) return;
 		
 		$body = $doc->getElementsByTagName('body')->item(0);
 		$node = $doc->createElement('script');
-		$node->appendChild($doc->createCDATASection("	var _gaq = _gaq || [];
+		$node->appendChild($doc->createCDATASection("var _gaq = _gaq || [];
 _gaq.push(['_setAccount', '$account']);
 _gaq.push(['_trackPageview']);
+{google_analytics_custom}
 (function() {
 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();"));
 		$body->appendChild($node);
+	}
+	public static function TrackEvent($category,$action,$opt_label=null,$opt_value=null,$opt_noninteraction=null) {
+		if ($opt_label) $opt_label = ", '$opt_label'";
+		if ($opt_value) $opt_value = ", $opt_value";
+		if ($opt_noninteraction) $opt_noninteraction = ", ".($opt_noninteraction ? 'true' : 'false');
+		$_SESSION['google_analytics_custom'][] = '_gaq.push(["_trackEvent", "'.$category.'", "'.$action.'"'.$opt_label.$opt_value.$opt_noninteraction.']);';
+	}
+	public static function PageView($url) {
+		$_SESSION['google_analytics_custom'][] = '_gaq.push(["_trackPageview", "'.$url.'"]);';
+	}
+	public static function IncludeCustom() {
+		if (!isset($_SESSION['google_analytics_custom']) || !$_SESSION['google_analytics_custom']) return '';
+		
+		// is redirect issued?  If so, don't draw now.
+		foreach (headers_list() as $h) {
+			if (preg_match('/^location:/i',$h)) return '';
+		}
+		
+		$t = "\n" . implode("\n\t",$_SESSION['google_analytics_custom']) . "\n";
+		unset($_SESSION['google_analytics_custom']);
+		return $t;
 	}
 	public function SetupParents() {
 		uEvents::AddCallback('ShowDashboard',array($this,'showWidget'));
