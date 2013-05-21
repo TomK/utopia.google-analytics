@@ -43,7 +43,7 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 	}
 	public function SetupParents() {
 		uEvents::AddCallback('ShowDashboard',array($this,'showWidget'));
-		modOpts::AddOption('google_analytics_token','');
+		modOpts::AddOption('google_analytics_token',null);
 		modOpts::AddOption('google_analytics_client_id','Client ID', 'Google Analytics');
 		modOpts::AddOption('google_analytics_client_secret','Client Secret', 'Google Analytics');
 		modOpts::AddOption('google_analytics_account','Tracking Account (UA-XXXXX-X)', 'Google Analytics');
