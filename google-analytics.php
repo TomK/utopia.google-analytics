@@ -41,13 +41,14 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 		unset($_SESSION['google_analytics_custom']);
 		return $t;
 	}
-	public function SetupParents() {
-		uEvents::AddCallback('ShowDashboard',array($this,'showWidget'));
+	public static function Initialise() {
+		uEvents::AddCallback('ShowDashboard','GoogleAnalytics::showWidget');
 		modOpts::AddOption('google_analytics_token',null);
 		modOpts::AddOption('google_analytics_client_id','Client ID', 'Google Analytics');
 		modOpts::AddOption('google_analytics_client_secret','Client Secret', 'Google Analytics');
 		modOpts::AddOption('google_analytics_account','Tracking Account (UA-XXXXX-X)', 'Google Analytics');
 	}
+	public function SetupParents() {}
 	public function RunModule() {
 		$account_id = modOpts::GetOption('google_analytics_account');
 
@@ -148,11 +149,12 @@ return;
 		);
 		return $data;
 	}
-	public function showWidget() {
+	public static function showWidget() {
+		$o = utopia::GetInstance(__CLASS__);
 		$token = modOpts::GetOption('google_analytics_token');
 		if (!$token) {
 			if (modOpts::GetOption('google_analytics_client_id') && modOpts::GetOption('google_analytics_client_secret')) {
-				$link = $this->GetURL();
+				$link = $o->GetURL();
 				echo '<a href="'.$link.'">Enable Analytics Widget</a>';
 			}
 			return;
@@ -192,7 +194,7 @@ $(function(){
 });
 </script>
 FIN;
-		$this->RunModule();
+		$o->RunModule();
 		echo '</div>';
 	}
 }
